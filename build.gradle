@@ -5,7 +5,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.2.3'
+        classpath 'com.android.tools.build:gradle:1.3.0'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -15,5 +15,42 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+    }
+}
+
+evaluationDependsOn(':backend')
+
+task startServer{
+    dependsOn tasks.getByPath(":backend:appengineRun")
+    doLast {
+        println "----------Start Server ---------------"
+    }
+}
+
+task runTest{
+    dependsOn tasks.getByPath(":app:connectedAndroidTest")
+    mustRunAfter startServer
+    doLast {
+        println "----------Run Test ---------------"
+    }
+}
+
+task stopServer{
+    dependsOn tasks.getByPath(":backend:appengineStop")
+    mustRunAfter startServer, runTest
+    doLast {
+        println "----------Stop Server ---------------"
+    }
+}
+
+// task to start up the GCE development server, run all Android tests, then shutdown
+// the development server.
+task runTestwithServer{
+    dependsOn startServer, stopServer, runTest
+
+    project(":backend") {
+        appengine {
+            daemon true
+        }
     }
 }
